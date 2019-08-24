@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tylertreat/comcast/throttler"
+	"./throttler"
 )
 
 const version = "1.0.0"
@@ -16,17 +16,19 @@ const version = "1.0.0"
 func main() {
 	// TODO: Add support for other options like packet reordering, duplication, etc.
 	var (
-		device      = flag.String("device", "", "Interface (device) to use (defaults to eth0 where applicable)")
-		stop        = flag.Bool("stop", false, "Stop packet controls")
-		latency     = flag.Int("latency", -1, "Latency to add in ms")
-		targetbw    = flag.Int("target-bw", -1, "Target bandwidth limit in kbit/s (slow-lane)")
-		defaultbw   = flag.Int("default-bw", -1, "Default bandwidth limit in kbit/s (fast-lane)")
-		packetLoss  = flag.String("packet-loss", "0", "Packet loss percentage (e.g. 0.1%)")
-		targetaddr  = flag.String("target-addr", "", "Target addresses, (e.g. 10.0.0.1 or 10.0.0.0/24 or 10.0.0.1,192.168.0.0/24 or 2001:db8:a::123)")
-		targetport  = flag.String("target-port", "", "Target port(s) (e.g. 80 or 1:65535 or 22,80,443,1000:1010)")
-		targetproto = flag.String("target-proto", "tcp,udp,icmp", "Target protocol TCP/UDP (e.g. tcp or tcp,udp or icmp)")
-		dryrun      = flag.Bool("dry-run", false, "Specifies whether or not to actually commit the rule changes")
-		//icmptype  = flag.String("icmp-type", "", "icmp message type (e.g. reply or reply,request)") //TODO: Maybe later :3
+		device          = flag.String("device", "", "Interface (device) to use (defaults to eth0 where applicable)")
+		stop            = flag.Bool("stop", false, "Stop packet controls")
+		latency         = flag.Int("latency", -1, "Latency to add in ms")
+		targetbw        = flag.Int("target-bw", -1, "Target bandwidth limit in kbit/s (slow-lane)")
+		defaultbw       = flag.Int("default-bw", -1, "Default bandwidth limit in kbit/s (fast-lane)")
+		packetLoss      = flag.String("packet-loss", "0", "Packet loss percentage (e.g. 0.1%)")
+		dupePcktPcnt    = flag.String("duplicate-percentage", "0", "Percentage of packets to duplicate (e.g. 1.0%)")
+		corruptPcktPcnt = flag.String("corruptpacket-pcnt", "0", "Percentage of packets to corrupt")
+		targetaddr      = flag.String("target-addr", "", "Target addresses, (e.g. 10.0.0.1 or 10.0.0.0/24 or 10.0.0.1,192.168.0.0/24 or 2001:db8:a::123)")
+		targetport      = flag.String("target-port", "", "Target port(s) (e.g. 80 or 1:65535 or 22,80,443,1000:1010)")
+		targetproto     = flag.String("target-proto", "tcp,udp,icmp", "Target protocol TCP/UDP (e.g. tcp or tcp,udp or icmp)")
+		dryrun          = flag.Bool("dry-run", false, "Specifies whether or not to actually commit the rule changes")
+		//icmptype      = flag.String("icmp-type", "", "icmp message type (e.g. reply or reply,request)") //TODO: Maybe later :3
 		vers = flag.Bool("version", false, "Print Comcast's version")
 	)
 	flag.Parse()
@@ -39,28 +41,30 @@ func main() {
 	targetIPv4, targetIPv6 := parseAddrs(*targetaddr)
 
 	throttler.Run(&throttler.Config{
-		Device:           *device,
-		Stop:             *stop,
-		Latency:          *latency,
-		TargetBandwidth:  *targetbw,
-		DefaultBandwidth: *defaultbw,
-		PacketLoss:       parseLoss(*packetLoss),
-		TargetIps:        targetIPv4,
-		TargetIps6:       targetIPv6,
-		TargetPorts:      parsePorts(*targetport),
-		TargetProtos:     parseProtos(*targetproto),
-		DryRun:           *dryrun,
+		Device:            *device,
+		Stop:              *stop,
+		Latency:           *latency,
+		TargetBandwidth:   *targetbw,
+		DefaultBandwidth:  *defaultbw,
+		DupePacketPcnt:    parseFloat(*dupePcktPcnt),
+		CorruptPacketPcnt: parseFloat(*corruptPcktPcnt),
+		PacketLoss:        parseFloat(*packetLoss),
+		TargetIps:         targetIPv4,
+		TargetIps6:        targetIPv6,
+		TargetPorts:       parsePorts(*targetport),
+		TargetProtos:      parseProtos(*targetproto),
+		DryRun:            *dryrun,
 	})
 }
 
-func parseLoss(loss string) float64 {
-	val := loss
-	if strings.Contains(loss, "%") {
-		val = loss[:len(loss)-1]
+func parseFloat(percentage string) float64 {
+	val := percentage
+	if strings.Contains(percentage, "%") {
+		val = percentage[:len(percentage)-1]
 	}
 	l, err := strconv.ParseFloat(val, 64)
 	if err != nil {
-		fmt.Println("Incorrectly specified packet loss:", loss)
+		fmt.Println("Incorrectly specified percentage:", percentage)
 		os.Exit(1)
 	}
 	return l
