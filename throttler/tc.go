@@ -64,6 +64,11 @@ func (t *tcThrottler) setup(cfg *Config) error {
 		return err
 	}
 
+	err = changeNetemRule(cfg, t.c) //The network emulator rule that contains the desired behavior
+	if err != nil {
+		return err
+	}
+
 	return addIptablesRules(cfg, t.c) //The network emulator rule that contains the desired behavior
 }
 
