@@ -14,7 +14,7 @@ const (
 	tcDefaultClass = `dev %s parent 10: classid 10:1`
 	tcTargetClass  = `dev %s parent 10: classid 10:10`
 	tcAddNetemRule = `dev %s parent 10:10 handle 100:`
-	tcChgNetemRule = `dev %s parent 10:10 handle 100:`
+	tcChgNetemRule = `dev %s parent 10:10 handle 200:`
 	tcRate         = `rate %vkbit`
 	tcDelay        = `delay %vms`
 	tcDuplicate    = `duplicate %v%%`
