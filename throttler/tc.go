@@ -13,7 +13,8 @@ const (
 	tcRootExtra    = `default 1`
 	tcDefaultClass = `dev %s parent 10: classid 10:1`
 	tcTargetClass  = `dev %s parent 10: classid 10:10`
-	tcNetemRule    = `dev %s parent 10:10 handle 100:`
+	tcAddNetemRule = `dev %s parent 10:10 handle 100:`
+	tcChgNetemRule = `dev %s parent 10:10 handle 100:`
 	tcRate         = `rate %vkbit`
 	tcDelay        = `delay %vms`
 	tcDuplicate    = `duplicate %v%%`
@@ -117,7 +118,7 @@ func addTargetClass(cfg *Config, c commander) error {
 
 func addNetemRule(cfg *Config, c commander) error {
 	//Add the Network Emulator rule
-	net := fmt.Sprintf(tcNetemRule, cfg.Device)
+	net := fmt.Sprintf(tcAddNetemRule, cfg.Device)
 	strs := []string{tcAddQDisc, net, "netem"}
 
 	if cfg.Latency > 0 {
@@ -139,7 +140,7 @@ func addNetemRule(cfg *Config, c commander) error {
 
 func changeNetemRule(cfg *Config, c commander) error {
 	//Add the Network Emulator rule
-	net := fmt.Sprintf(tcNetemRule, cfg.Device)
+	net := fmt.Sprintf(tcChgNetemRule, cfg.Device)
 	strs := []string{tcChangeQDisc, net, "netem"}
 
 	if cfg.DupePacketPcnt > 0 {
