@@ -20,6 +20,7 @@ const (
 	tcDuplicate    = `duplicate %v%%`
 	tcCorrupt      = `corrupt %v%%`
 	tcLoss         = `loss %v%%`
+	tcReorder      = `reorder %v%%`
 	tcAddClass     = `sudo tc class add`
 	tcDelClass     = `sudo tc class del`
 	tcAddQDisc     = `sudo tc qdisc add`
@@ -61,11 +62,6 @@ func (t *tcThrottler) setup(cfg *Config) error {
 	}
 
 	err = addNetemRule(cfg, t.c) //The network emulator rule that contains the desired behavior
-	if err != nil {
-		return err
-	}
-
-	err = changeNetemRule(cfg, t.c) //The network emulator rule that contains the desired behavior
 	if err != nil {
 		return err
 	}
@@ -133,22 +129,16 @@ func addNetemRule(cfg *Config, c commander) error {
 		strs = append(strs, fmt.Sprintf(tcLoss, strconv.FormatFloat(cfg.PacketLoss, 'f', 2, 64)))
 	}
 
-	cmd := strings.Join(strs, " ")
-
-	return c.execute(cmd)
-}
-
-func changeNetemRule(cfg *Config, c commander) error {
-	//Add the Network Emulator rule
-	net := fmt.Sprintf(tcChgNetemRule, cfg.Device)
-	strs := []string{tcChangeQDisc, net, "netem"}
-
 	if cfg.DupePacketPcnt > 0 {
 		strs = append(strs, fmt.Sprintf(tcDuplicate, strconv.FormatFloat(cfg.DupePacketPcnt, 'f', 2, 64)))
 	}
 
 	if cfg.CorruptPacketPcnt > 0 {
 		strs = append(strs, fmt.Sprintf(tcCorrupt, strconv.FormatFloat(cfg.CorruptPacketPcnt, 'f', 2, 64)))
+	}
+
+	if cfg.ReorderPacketPcnt > 0 {
+		strs = append(strs, fmt.Sprintf(tcReorder, strconv.FormatFloat(cfg.ReorderPacketPcnt, 'f', 2, 64)))
 	}
 
 	cmd := strings.Join(strs, " ")

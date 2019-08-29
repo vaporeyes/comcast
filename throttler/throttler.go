@@ -29,6 +29,7 @@ type Config struct {
 	PacketLoss        float64
 	DupePacketPcnt    float64
 	CorruptPacketPcnt float64
+	ReorderPacketPcnt float64
 	TargetIps         []string
 	TargetIps6        []string
 	TargetPorts       []string
