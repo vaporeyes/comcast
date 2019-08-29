@@ -24,7 +24,7 @@ type Config struct {
 	Device            string
 	Stop              bool
 	Delay             int
-	DelayRandom       float64
+	DelayRandom       int
 	DelayCorrelation  float64
 	TargetBandwidth   int
 	DefaultBandwidth  int
