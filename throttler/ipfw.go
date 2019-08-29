@@ -48,8 +48,8 @@ func (i *ipfwThrottler) check() string {
 func (i *ipfwThrottler) buildConfigCommand(c *Config) string {
 	cmd := ipfwConfig
 
-	if c.Latency > 0 {
-		cmd = cmd + " delay " + strconv.Itoa(c.Latency) + "ms"
+	if c.Delay > 0 {
+		cmd = cmd + " delay " + strconv.Itoa(c.Delay) + "ms"
 	}
 
 	if c.TargetBandwidth > 0 {

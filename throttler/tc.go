@@ -240,11 +240,11 @@ func (t *tcThrottler) teardown(cfg *Config) error {
 	if err := delRootQDisc(cfg, t.c); err != nil {
 		return err
 	}
-	return nil
 
 	if err := delIptablesRules(cfg, t.c); err != nil {
 		return err
 	}
+	return nil
 }
 
 func delIptablesRules(cfg *Config, c commander) error {

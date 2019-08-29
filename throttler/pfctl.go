@@ -179,8 +179,8 @@ func (i *pfctlThrottler) buildConfigCommand(c *Config) []string {
 	cmd := dnctl
 
 	// Add all non tcp version dependent stuff first...
-	if c.Latency > 0 {
-		cmd = cmd + " delay " + strconv.Itoa(c.Latency) + "ms"
+	if c.Delay > 0 {
+		cmd = cmd + " delay " + strconv.Itoa(c.Delay) + "ms"
 	}
 
 	if c.TargetBandwidth > 0 {
