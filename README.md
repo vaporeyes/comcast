@@ -1,5 +1,9 @@
 # Comcast
 
+Forked from the original at: [comcast](github.com/tylertreat/comcast)
+
+See also: http://man7.org/linux/man-pages/man8/tc-netem.8.html
+
 Testing distributed systems under hard failures like network partitions and instance termination is critical, but it's also important we test them under [less catastrophic conditions](http://www.bravenewgeek.com/sometimes-kill-9-isnt-enough/) because this is what they most often experience. Comcast is a tool designed to simulate common network problems like latency, bandwidth restrictions, and dropped/reordered/corrupted packets.
 
 It works by wrapping up some system tools in a portable(ish) way. On BSD-derived systems such as OSX, we use tools like `ipfw` and `pfctl` to inject failure. On Linux, we use `iptables` and `tc`. Comcast is merely a thin wrapper around these controls. Windows support may be possible with `wipfw` or even the native network stack, but this has not yet been implemented in Comcast and may be at a later date.
@@ -7,15 +11,15 @@ It works by wrapping up some system tools in a portable(ish) way. On BSD-derived
 ## Installation
 
 ```
-$ go get github.com/tylertreat/comcast
+$ go get github.com/vaporeyes/comcast
 ```
 
 ## Usage
 
-On Linux, Comcast supports several options: device, latency, target/default bandwidth, packet loss, protocol, and port number.
+On Linux, Comcast supports several options: device, latency (delay), target/default bandwidth (rate), packet loss (loss), duplication of packets (duplicate), corruption (corrupt) of packets, reordering of packets, protocol, and port number.
 
 ```
-$ comcast --device=eth0 --latency=250 --target-bw=1000 --default-bw=1000000 --packet-loss=10% --target-addr=8.8.8.8,10.0.0.0/24 --target-proto=tcp,udp,icmp --target-port=80,22,1000:2000
+$ comcast --device=eth0 --delay=250 --delay-jitter=10 --delay-correlation=10% --targetbw=1000 --defaultbw=1000000 --loss=10% --target-addr=8.8.8.8,10.0.0.0/24 --target-proto=tcp,udp,icmp --target-port=80,22,1000:2000
 ```
 
 On OSX, Comcast will check for `pfctl` support (as of Yosemite), which supports the same options as above. If `pfctl` is not available, it will use `ipfw` instead, which supports device, latency, target bandwidth, and packet-loss options.
@@ -80,15 +84,19 @@ $ ipfw delete 1
 
 ## Network Condition Profiles
 
-Here's a list of network conditions with values that you can plug into Comcast. Please add any more that you may come across.
+Here's a list of network conditions and examples with values that you can plug into Comcast. Please add any more that you may come across.
 
-Name | Latency | Bandwidth | Packet-loss
-:-- | --: | --: | --:
-GPRS (good) | 500 | 50 | 2
-EDGE (good) | 300 | 250 | 1.5
-3G/HSDPA (good) | 250 | 750 | 1.5
-DIAL-UP (good) | 185 | 40 | 2
-DSL (poor) | 70 | 2000 | 2
-DSL (good) | 40 | 8000 | 0.5
-WIFI (good) | 40 | 30000 | 0.2
-Satellite | 1500 | - | 0.2
+Name | Latency | Bandwidth | Packet-loss | Comcast Command on Linux
+:-- | --: | --: | --: | --:
+GPRS (good) | 500 | 50 | 2 | ./comcast -delay 500 -targetbw 50 -loss 2
+EDGE (good) | 400 | 200 | 1.5 | ./comcast -delay 400 -targetbw 200
+3G/HSDPA (good) | 100 | 330 | 1.5 | ./comcast -delay 100 -targetbw 330 -loss 1.5
+DIAL-UP (good) | 185 | 40 | 2 | ./comcast -delay 185 -targetbw 40 -loss 2
+DSL (poor) | 70 | 200 | 2 | ./comcast -delay 70 -targetbw 200 -loss 2
+DSL (good) | 5 | 2000 | 0.5 | ./comcast -delay 40 -targetbw 2000 -loss 0.5
+WIFI (good) | 40 | 30000 | 0.2 | ./comcast -delay 40 -targetbw 30000 -loss 0.2
+Satellite | 1500 | - | 0.2 | ./comcast -delay 1500 -loss 0.2
+100% Loss | - | - | 100 | ./comcast -loss 100
+High-Latency DNS | - | - | - | ./comcast -target-port 53
+LTE | 65 | 10000 | - | ./comcast -delay 65 -targetbw 10000
+Crappy Network | 500 | 1000 | 10 | ./comcast -delay 500 -targetbw 1000
