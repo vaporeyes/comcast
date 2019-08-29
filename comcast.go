@@ -16,19 +16,21 @@ const version = "1.0.0"
 func main() {
 	// TODO: Add support for other options like packet reordering, duplication, etc.
 	var (
-		device      = flag.String("device", "", "Interface (device) to use (defaults to eth0 where applicable)")
-		stop        = flag.Bool("stop", false, "Stop packet controls")
-		latency     = flag.Int("latency", -1, "Latency to add in ms")
-		targetbw    = flag.Int("targetbw", -1, "Target bandwidth limit in kbit/s (slow-lane)")
-		defaultbw   = flag.Int("defaultbw", -1, "Default bandwidth limit in kbit/s (fast-lane)")
-		loss        = flag.String("packet-loss", "0", "Packet loss percentage (e.g. 0.1%)")
-		duplicate   = flag.String("duplicate-pcnt", "0", "Percentage of packets to duplicate (e.g. 1.0%)")
-		corrupt     = flag.String("corrupt-pcnt", "0", "Percentage of packets to corrupt (e.g. 0.1%)")
-		reorder     = flag.String("reorder-pcnt", "0", "Percentage of packets to reorder (e.g. 0.1%)")
-		targetaddr  = flag.String("target-addr", "", "Target addresses, (e.g. 10.0.0.1 or 10.0.0.0/24 or 10.0.0.1,192.168.0.0/24 or 2001:db8:a::123)")
-		targetport  = flag.String("target-port", "", "Target port(s) (e.g. 80 or 1:65535 or 22,80,443,1000:1010)")
-		targetproto = flag.String("target-proto", "tcp,udp,icmp", "Target protocol TCP/UDP (e.g. tcp or tcp,udp or icmp)")
-		dryrun      = flag.Bool("dry-run", false, "Specifies whether or not to actually commit the rule changes")
+		device           = flag.String("device", "", "Interface (device) to use (defaults to eth0 where applicable)")
+		stop             = flag.Bool("stop", false, "Stop packet controls")
+		delay            = flag.Int("delay", -1, "Latency to add in ms")
+		delayrandom      = flag.Int("jitter", -1, "Jitter to add in ms - used with -delay")
+		delaycorrelation = flag.String("correlation", "0", "Delay correlation in percentage - used with -delay")
+		targetbw         = flag.Int("targetbw", -1, "Target bandwidth limit in kbit/s (slow-lane)")
+		defaultbw        = flag.Int("defaultbw", -1, "Default bandwidth limit in kbit/s (fast-lane)")
+		loss             = flag.String("packet-loss", "0", "Packet loss percentage (e.g. 0.1%)")
+		duplicate        = flag.String("duplicate-pcnt", "0", "Percentage of packets to duplicate (e.g. 1.0%)")
+		corrupt          = flag.String("corrupt-pcnt", "0", "Percentage of packets to corrupt (e.g. 0.1%)")
+		reorder          = flag.String("reorder-pcnt", "0", "Percentage of packets to reorder (e.g. 0.1%)")
+		targetaddr       = flag.String("target-addr", "", "Target addresses, (e.g. 10.0.0.1 or 10.0.0.0/24 or 10.0.0.1,192.168.0.0/24 or 2001:db8:a::123)")
+		targetport       = flag.String("target-port", "", "Target port(s) (e.g. 80 or 1:65535 or 22,80,443,1000:1010)")
+		targetproto      = flag.String("target-proto", "tcp,udp,icmp", "Target protocol TCP/UDP (e.g. tcp or tcp,udp or icmp)")
+		dryrun           = flag.Bool("dry-run", false, "Specifies whether or not to actually commit the rule changes")
 		//icmptype      = flag.String("icmp-type", "", "icmp message type (e.g. reply or reply,request)") //TODO: Maybe later :3
 		vers = flag.Bool("version", false, "Print Comcast's version")
 	)
@@ -46,7 +48,9 @@ func main() {
 		Stop:              *stop,
 		TargetBandwidth:   *targetbw,
 		DefaultBandwidth:  *defaultbw,
-		Latency:           *latency,
+		Delay:             *delay, // essentially latency
+		DelayRandom:       *delayrandom,
+		DelayCorrelation:  parseFloat(*delaycorrelation),
 		PacketLoss:        parseFloat(*loss),
 		DupePacketPcnt:    parseFloat(*duplicate),
 		CorruptPacketPcnt: parseFloat(*corrupt),

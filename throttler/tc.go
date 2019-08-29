@@ -9,36 +9,42 @@ import (
 )
 
 const (
-	tcRootQDisc    = `dev %s handle 10: root`
-	tcRootExtra    = `default 1`
-	tcDefaultClass = `dev %s parent 10: classid 10:1`
-	tcTargetClass  = `dev %s parent 10: classid 10:10`
-	tcAddNetemRule = `dev %s parent 10:10 handle 100:`
-	tcChgNetemRule = `dev %s parent 10:10 handle 200:`
-	tcRate         = `rate %vkbit`
-	tcDelay        = `delay %vms`
-	tcDuplicate    = `duplicate %v%%`
-	tcCorrupt      = `corrupt %v%%`
-	tcLoss         = `loss %v%%`
-	tcReorder      = `reorder %v%%`
-	tcAddClass     = `sudo tc class add`
-	tcDelClass     = `sudo tc class del`
-	tcAddQDisc     = `sudo tc qdisc add`
-	tcDelQDisc     = `sudo tc qdisc del`
-	tcChangeQDisc  = `sudo tc qdisc change`
-	iptAddTarget   = `sudo %s -A POSTROUTING -t mangle -j CLASSIFY --set-class 10:10`
-	iptDelTarget   = `sudo %s -D POSTROUTING -t mangle -j CLASSIFY --set-class 10:10`
-	iptDestIP      = `-d %s`
-	iptProto       = `-p %s`
-	iptDestPorts   = `--match multiport --dports %s`
-	iptDestPort    = `--dport %s`
-	iptDelSearch   = `class 0010:0010`
-	iptList        = `sudo %s -S -t mangle`
-	ip4Tables      = `iptables`
-	ip6Tables      = `ip6tables`
-	iptDel         = `sudo %s -t mangle -D`
-	tcExists       = `sudo tc qdisc show | grep "netem"`
-	tcCheck        = `sudo tc -s qdisc`
+	tcRootQDisc        = `dev %s handle 10: root`
+	tcRootExtra        = `default 1`
+	tcDefaultClass     = `dev %s parent 10: classid 10:1`
+	tcTargetClass      = `dev %s parent 10: classid 10:10`
+	tcAddNetemRule     = `dev %s parent 10:10 handle 100:`
+	tcChgNetemRule     = `dev %s parent 10:10 handle 200:`
+	tcRate             = `rate %vkbit`
+	tcDelay            = `delay %vms`
+	tcDelayRand        = `delay %vms %vms`
+	tcDelayRandCorrel  = `delay %vms %vms %v%%`
+	tcDelayUniformDist = `%vms`
+	tcDelayDistNormal  = `normal`
+	tcDelayDistPareto  = `pareto`
+	tcDelayDistPNorm   = `paretonormal`
+	tcDuplicate        = `duplicate %v%%`
+	tcCorrupt          = `corrupt %v%%`
+	tcLoss             = `loss %v%%`
+	tcReorder          = `reorder %v%%`
+	tcAddClass         = `sudo tc class add`
+	tcDelClass         = `sudo tc class del`
+	tcAddQDisc         = `sudo tc qdisc add`
+	tcDelQDisc         = `sudo tc qdisc del`
+	tcChangeQDisc      = `sudo tc qdisc change`
+	iptAddTarget       = `sudo %s -A POSTROUTING -t mangle -j CLASSIFY --set-class 10:10`
+	iptDelTarget       = `sudo %s -D POSTROUTING -t mangle -j CLASSIFY --set-class 10:10`
+	iptDestIP          = `-d %s`
+	iptProto           = `-p %s`
+	iptDestPorts       = `--match multiport --dports %s`
+	iptDestPort        = `--dport %s`
+	iptDelSearch       = `class 0010:0010`
+	iptList            = `sudo %s -S -t mangle`
+	ip4Tables          = `iptables`
+	ip6Tables          = `ip6tables`
+	iptDel             = `sudo %s -t mangle -D`
+	tcExists           = `sudo tc qdisc show | grep "netem"`
+	tcCheck            = `sudo tc -s qdisc`
 )
 
 type tcThrottler struct {
@@ -117,8 +123,12 @@ func addNetemRule(cfg *Config, c commander) error {
 	net := fmt.Sprintf(tcAddNetemRule, cfg.Device)
 	strs := []string{tcAddQDisc, net, "netem"}
 
-	if cfg.Latency > 0 {
-		strs = append(strs, fmt.Sprintf(tcDelay, cfg.Latency))
+	if cfg.Delay > 0 && cfg.DelayRandom > 0 && cfg.DelayCorrelation > 0 {
+		strs = append(strs, fmt.Sprintf(tcDelayRandCorrel, cfg.Delay, cfg.DelayRandom, cfg.DelayCorrelation))
+	} else if cfg.Delay > 0 && cfg.DelayRandom > 0 {
+		strs = append(strs, fmt.Sprintf(tcDelayRand, cfg.Delay, cfg.DelayRandom))
+	} else if cfg.Delay > 0 {
+		strs = append(strs, fmt.Sprintf(tcDelay, cfg.Delay))
 	}
 
 	if cfg.TargetBandwidth > -1 {
@@ -226,15 +236,15 @@ func addIptablesRulesForAddrs(cfg *Config, c commander, command string, addrs []
 }
 
 func (t *tcThrottler) teardown(cfg *Config) error {
-	if err := delIptablesRules(cfg, t.c); err != nil {
-		return err
-	}
-
 	// The root node to append the filters
 	if err := delRootQDisc(cfg, t.c); err != nil {
 		return err
 	}
 	return nil
+
+	if err := delIptablesRules(cfg, t.c); err != nil {
+		return err
+	}
 }
 
 func delIptablesRules(cfg *Config, c commander) error {

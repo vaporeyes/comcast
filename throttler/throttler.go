@@ -23,7 +23,9 @@ const (
 type Config struct {
 	Device            string
 	Stop              bool
-	Latency           int
+	Delay             int
+	DelayRandom       float64
+	DelayCorrelation  float64
 	TargetBandwidth   int
 	DefaultBandwidth  int
 	PacketLoss        float64
